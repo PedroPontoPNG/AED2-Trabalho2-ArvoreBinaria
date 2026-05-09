@@ -1,5 +1,5 @@
-#ifndef TAD_ARVORE_H
-#define TAD_ARVORE_H
+#ifndef TAD_ARVORES_H
+#define TAD_ARVORES_H
 
 typedef struct arv{
 	int info;
