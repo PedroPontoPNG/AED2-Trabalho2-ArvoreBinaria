@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
-#include "TAD-arvore.h"
+#include "TAD-arvores.h"
 
 
 
@@ -32,7 +32,7 @@ Arvore* inserirNaArvore (Arvore* arv, int chave){
 }
 
 void preOrdem(Arvore* arv){
-	if(!arv){
+	if(arv != NULL){
 		printf("%d, ",arv->info);
 		preOrdem(arv->esq);
 		preOrdem(arv->dir);
@@ -40,7 +40,7 @@ void preOrdem(Arvore* arv){
 }
 
 void emOrdem(Arvore* arv){
-	if(!arv){
+	if(arv != NULL){
 		emOrdem(arv->esq);
 		printf("%d, ",arv->info);
 		emOrdem(arv->dir);
@@ -48,7 +48,7 @@ void emOrdem(Arvore* arv){
 }
 
 void posOrdem(Arvore* arv){
-	if(!arv){
+	if(arv != NULL){
 		posOrdem(arv->esq);
 		posOrdem(arv->dir);
 		printf("%d, ",arv->info);
