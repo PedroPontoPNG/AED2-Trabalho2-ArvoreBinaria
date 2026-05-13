@@ -8,16 +8,15 @@ typedef struct arv{
 }Arvore;
 
 Arvore* criarArvore();
-void destroiArvore(Arvore* arv);
 Arvore* inserirNaArvore (Arvore* arv, int chave);
 void preOrdem(Arvore* arv);
 void emOrdem(Arvore* arv);
 void posOrdem(Arvore* arv);
 Arvore* remover(Arvore *arv, int chave);
 Arvore* libera(Arvore* arv);
-int buscar( Arvore *arv, long chave);
-long maior(long a, long b);
+int buscar( Arvore *arv, int chave);
+int maior(int a, int b);
 int maior_ramo(Arvore *arv);     
-
+int contarNos(Arvore *arv);
 #endif
 
