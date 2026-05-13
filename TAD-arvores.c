@@ -7,14 +7,6 @@
 
 Arvore* criarArvore(){return NULL;}
 
-void destroiArvore(Arvore* arv){
-	if(arv != NULL){
-		destroiArvore(arv->esq);
-		destroiArvore(arv->dir);
-		free(arv);
-	}
-}
-
 Arvore* inserirNaArvore (Arvore* arv, int chave){
 	if(arv == NULL){
 		arv = (Arvore*)malloc(sizeof(Arvore));
@@ -81,18 +73,18 @@ Arvore* remover(Arvore *arv, int chave){
 			}
 			else{
 				Arvore* temp = arv->esq; 
-				while(arv->dir != NULL){temp = temp->dir;}/*Procurar o elemento mais a direita da sub árvore a esquerda*/
+				while(temp->dir != NULL){temp = temp->dir;}/*Procurar o elemento mais a direita da sub árvore a esquerda*/
 				arv->info = temp->info;
-				temp->info = chave;
 				arv->esq = remover(arv->esq,chave);
 			}
 		}
 	}
+	return arv;
 }
 
 
 Arvore* libera(Arvore* arv){
-	if(!arv){
+	if(arv != NULL){
 		libera(arv->esq);
 		libera(arv->dir);
 		free(arv);
@@ -100,12 +92,9 @@ Arvore* libera(Arvore* arv){
 	return NULL;
 }
 
-int buscar( Arvore *arv, long chave){
+int buscar( Arvore *arv, int chave){
 	if(arv == NULL){
 		return 0;
-	}
-	else if(chave < arv->info){
-		return buscar(arv->esq,chave);
 	}
 	else if(chave < arv->info){
 		return buscar(arv->esq,chave);
@@ -117,7 +106,7 @@ int buscar( Arvore *arv, long chave){
 	}
 }
 
-long maior(long a, long b){
+int maior(int a, int b){
     if(a > b)
         return a;
     else
@@ -133,10 +122,10 @@ int maior_ramo(Arvore *arv){
    }
 }
 
-
-		
-
-
-
-
+int contarNos(Arvore *arv){
+   if(arv == NULL)
+        return 0;
+   else
+        return 1 + contarNos(arv->esq) + contarNos(arv->dir);
+}
 
