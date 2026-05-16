@@ -1,40 +1,79 @@
-#include <stdio.h>
-
 #include "TAD-pacotes.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 int main()
 {
+    char texto[MAX_TEXTO];
+
+    Pacote pacotes[MAX_PACOTES];
+
+    int quantidade;
+
+    int i;
+
     ArvorePacotes *raiz;
 
     raiz = criarArvorePacotes();
 
-    Pacote p1 = criarPacote(3, "  ");
-    Pacote p2 = criarPacote(1, "Wi-");
-    Pacote p3 = criarPacote(2, "fi");
-    Pacote p4 = criarPacote(4, "Ral");
-    Pacote p5 = criarPacote(5, "ph!");
-    Pacote p6 = criarPacote(6, " ");
+    lerArquivo(
+        "arquivo_inicial.txt",
+        texto);
 
-    Pacote p7 = gerarPacoteAutomatico(7);
+    printf("\nTEXTO ORIGINAL:\n\n");
 
-    raiz = inserirPacote(raiz, p1);
-    raiz = inserirPacote(raiz, p2);
-    raiz = inserirPacote(raiz, p3);
-    raiz = inserirPacote(raiz, p4);
-    raiz = inserirPacote(raiz, p5);
-    raiz = inserirPacote(raiz, p6);
+    printf("%s\n", texto);
 
-    printf("\nPACOTES EM ORDEM:\n\n");
+    quantidade =
+        dividirPacotes(
+            texto,
+            pacotes);
+
+    printf("\nPACOTES CRIADOS:\n\n");
+
+    mostrarPacotes(
+        pacotes,
+        quantidade);
+
+    embaralharPacotes(
+        pacotes,
+        quantidade);
+
+    printf("\nPACOTES EMBARALHADOS:\n\n");
+
+    mostrarPacotes(
+        pacotes,
+        quantidade);
+
+    for (i = 0; i < quantidade; i++)
+    {
+        raiz =
+            inserirPacote(
+                raiz,
+                pacotes[i]);
+    }
+
+    printf("\nPACOTES ORGANIZADOS:\n\n");
 
     emOrdemPacotes(raiz);
 
     FILE *fp;
 
-    fp = fopen("arquivo_final.txt", "w");
+    fp = fopen(
+        "arquivo_reconstruido.txt",
+        "w");
 
-    salvarArquivo(raiz, fp);
+    salvarArquivo(
+        raiz,
+        fp);
 
     fclose(fp);
+
+    printf(
+        "\nArquivo reconstruido com sucesso.\n");
 
     liberarArvorePacotes(raiz);
 
