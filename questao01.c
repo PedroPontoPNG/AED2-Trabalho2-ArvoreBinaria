@@ -5,13 +5,15 @@
 #include <math.h>
 #include "TAD-arvores.h"
 
-int main(){
+int main()
+{
     setlocale(LC_ALL, "Portuguese");
-    Arvore* arv = criarArvore();
+    Arvore *arv = criarArvore();
 
     int i, n = 20;
     srand(time(NULL));
-    for(i = 0; i < n; i++){
+    for (i = 0; i < n; i++)
+    {
         int num = rand() % 100;
         printf("%d ", num);
         arv = inserirNaArvore(arv, num);
@@ -26,6 +28,6 @@ int main(){
     printf("Pós-ordem: ");
     posOrdem(arv);
     printf("\n");
-    
+
     return 0;
 }
