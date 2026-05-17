@@ -20,3 +20,8 @@ double tempoDeExecucao(struct timespec inicio, struct timespec fim){
     printf("========================\n");*/
     return tempoSeg;
 }
+
+double mediaTempo30(double tempo){
+    tempo=tempo/30;
+    return tempo;
+}

@@ -14,3 +14,4 @@ extern int vetor[];
 extern const int N;
 
 double tempoDeExecucao(struct timespec inicio, struct timespec fim);
+double mediaTempo30(double tempo);
