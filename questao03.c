@@ -21,11 +21,7 @@ int main(){
     double tempoArv=0;
 
     long memoriaVetor = 1000000 * sizeof(int);
-
-    long memoriaArvore = 1000000 * sizeof(struct arv); 
-
-
-
+    long memoriaArvore = 1000000 * sizeof(struct arv);
 
     int i, n = 1000000;
 
@@ -63,7 +59,9 @@ int main(){
 
         tempoArv+= tempoDeExecucao(inicio,fim);
 
-        printf("\n%.6lf segundos\n", tempoDeExecucao(inicio,fim));
+        printf("\n");
+
+        printf("%.6lf segundos\n", tempoDeExecucao(inicio,fim));
 
         clock_gettime(CLOCK_REALTIME, &inicio);
 
@@ -73,7 +71,9 @@ int main(){
 
         tempoVet+= tempoDeExecucao(inicio,fim);
 
-        printf("\n%.6lf segundos\n", tempoDeExecucao(inicio,fim));
+        printf("\n");
+
+        printf("%.6lf segundos\n", tempoDeExecucao(inicio,fim));
 
 
     }
@@ -98,8 +98,9 @@ int main(){
         }
         tempoArv+= tempoDeExecucao(inicio,fim);
 
+        printf("\n");
 
-        printf("\n%.6lf segundos\n", tempoDeExecucao(inicio,fim));
+        printf("%.6lf segundos\n", tempoDeExecucao(inicio,fim));
 
         clock_gettime(CLOCK_REALTIME, &inicio);
 
@@ -109,7 +110,9 @@ int main(){
 
         tempoVet+= tempoDeExecucao(inicio,fim);
 
-        printf("\n%.6lf segundos\n", tempoDeExecucao(inicio,fim));
+        printf("\n");
+
+        printf("%.6lf segundos\n", tempoDeExecucao(inicio,fim));
 
 
     }

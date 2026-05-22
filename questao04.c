@@ -1,272 +1,225 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
+#include <stdlib.h>
 #include <locale.h>
 
 #include "TAD-arvores.h"
 #include "TAD-avl.h"
+#include "TAD-Vetorzao.h"
 #include "TAD-tempo.h"
 
-/* =====================================================================
-   Questao 04 - Comparacao entre Arvore AVL e Arvore Binaria de Pesquisa
-   ===================================================================== */
-
-#define NUM_ELEMENTOS 1000000
-#define NUM_EXECUCOES 10
-#define NUM_CONSULTAS 30
-
 /* -----------------------------------------------------------------------
-   Funcoes auxiliares para a BST (inserção e busca iterativas,
-   altura via BFS e liberação iterativa para evitar stack overflow)
+   Funcoes auxiliares locais para a BST
+   (inserção iterativa que rejeita duplicatas e cálculo de altura)
    ----------------------------------------------------------------------- */
 
-/* Inserção iterativa na BST */
-Arvore* inserirBST(Arvore* arv, int chave){
-	Arvore* novo = (Arvore*)malloc(sizeof(Arvore));
-	novo->info = chave;
-	novo->esq = NULL;
-	novo->dir = NULL;
+/* Inserção iterativa na BST - ignora duplicatas para comparacao justa com AVL */
+Arvore* inserirBST(Arvore* arv, int chave) {
+    Arvore* novo = (Arvore*)malloc(sizeof(Arvore));
+    novo->info = chave;
+    novo->esq = NULL;
+    novo->dir = NULL;
 
-	if(arv == NULL) return novo;
+    if (arv == NULL) return novo;
 
-	Arvore* atual = arv;
-	while(1){
-		if(chave < atual->info){
-			if(atual->esq == NULL){ atual->esq = novo; return arv; }
-			atual = atual->esq;
-		}else{
-			if(atual->dir == NULL){ atual->dir = novo; return arv; }
-			atual = atual->dir;
-		}
-	}
+    Arvore* atual = arv;
+    while (1) {
+        if (chave < atual->info) {
+            if (atual->esq == NULL) { atual->esq = novo; return arv; }
+            atual = atual->esq;
+        } else if (chave > atual->info) {
+            if (atual->dir == NULL) { atual->dir = novo; return arv; }
+            atual = atual->dir;
+        } else {
+            /* Chave duplicada: ignora (mesmo comportamento da AVL) */
+            free(novo);
+            return arv;
+        }
+    }
 }
 
-/* Busca iterativa na BST */
-int buscarBST(Arvore *arv, int chave){
-	Arvore* atual = arv;
-	while(atual != NULL){
-		if(chave == atual->info) return 1;
-		if(chave < atual->info) atual = atual->esq;
-		else atual = atual->dir;
-	}
-	return 0;
-}
-
-/* Altura da BST via BFS iterativo */
-int alturaBST(Arvore *arv){
-	if(arv == NULL) return 0;
-
-	int capacidade = NUM_ELEMENTOS;
-	Arvore **fila = (Arvore**)malloc(capacidade * sizeof(Arvore*));
-	int frente = 0, tras = 0;
-	int altura = 0;
-
-	fila[tras++] = arv;
-	while(frente < tras){
-		int tamanhoNivel = tras - frente;
-		altura++;
-		int i;
-		for(i = 0; i < tamanhoNivel; i++){
-			Arvore *no = fila[frente++];
-			if(no->esq) fila[tras++] = no->esq;
-			if(no->dir) fila[tras++] = no->dir;
-		}
-	}
-	free(fila);
-	return altura;
-}
-
-/* Liberação iterativa da BST */
-Arvore* liberarBST(Arvore* arv){
-	if(arv == NULL) return NULL;
-
-	Arvore **pilha = (Arvore**)malloc(NUM_ELEMENTOS * sizeof(Arvore*));
-	int topo = 0;
-
-	pilha[topo++] = arv;
-	while(topo > 0){
-		Arvore *no = pilha[--topo];
-		if(no->esq) pilha[topo++] = no->esq;
-		if(no->dir) pilha[topo++] = no->dir;
-		free(no);
-	}
-	free(pilha);
-	return NULL;
+/* Altura da BST (recursiva - segura para altura ~50 com dados aleatorios) */
+int alturaBST(Arvore* arv) {
+    if (arv == NULL) return 0;
+    int hEsq = alturaBST(arv->esq);
+    int hDir = alturaBST(arv->dir);
+    return 1 + (hEsq > hDir ? hEsq : hDir);
 }
 
 /* -----------------------------------------------------------------------
    Programa Principal
    ----------------------------------------------------------------------- */
-int main(){
-	struct timespec inicio, fim;
-	int i, j, k;
+int main() {
 
-	setlocale(LC_ALL, "Portuguese");
+    struct timespec inicio, fim;
 
-	int *numeros = (int*)malloc(NUM_ELEMENTOS * sizeof(int));
-	if(numeros == NULL){
-		printf("Erro ao alocar memoria para o vetor de numeros.\n");
-		return 1;
-	}
+    setlocale(LC_ALL, "Portuguese");
 
-	int chavesBusca[NUM_CONSULTAS];
+    int n = 1000000;
+    int execucoes = 10;
+    int buscas = 30;
 
-	printf("================================================================\n");
-	printf("  Questao 04 - Comparacao: Arvore AVL  vs  Arvore Binaria (BST)\n");
-	printf("  Elementos: %d | Execucoes: %d | Consultas: %d\n",
-	       NUM_ELEMENTOS, NUM_EXECUCOES, NUM_CONSULTAS);
-	printf("================================================================\n\n");
+    /* Gera os valores uma unica vez para usar em todas as execucoes */
+    int* valores = (int*) malloc(n * sizeof(int));
+    if (valores == NULL) {
+        printf("Erro ao alocar memoria para os valores.\n");
+        return 1;
+    }
 
-	/* Gerar numeros aleatorios UMA vez (mesmos valores em todas as execucoes) */
-	srand(42);
-	for(i = 0; i < NUM_ELEMENTOS; i++){
-		numeros[i] = ((rand() << 15) | rand()) % 10000000;
-	}
+    srand(42); /* Semente fixa para reproducibilidade entre execucoes */
+    for (int i = 0; i < n; i++) {
+        valores[i] = (int)((unsigned int)((rand() << 15) | rand()) % 1000000U);
+    }
 
-	/* Gerar chaves de busca: 15 existentes + 15 aleatorias */
-	for(i = 0; i < 15; i++){
-		chavesBusca[i] = numeros[rand() % NUM_ELEMENTOS];
-	}
-	for(i = 15; i < NUM_CONSULTAS; i++){
-		chavesBusca[i] = ((rand() << 15) | rand()) % 10000000;
-	}
+    /* Preenche o vetor com os mesmos valores e ordena para busca binaria */
+    for (int i = 0; i < n; i++) {
+        inserirNoVetor(i, valores[i]);
+    }
+    quicksort(vetor, 0, n - 1);
 
-	double tempoTotalCriacaoBST = 0, tempoTotalCriacaoAVL = 0;
-	double tempoTotalBuscaBST = 0, tempoTotalBuscaAVL = 0;
+    /* Gera as 30 chaves de busca
+     (as mesmas para todas as execucoes):
+       15 presentes no vetor + 15 aleatorias (podem ou nao estar) */
 
-	printf("+-----------+----------------------+----------------------+------------+------------+\n");
-	printf("| Execucao  |  Tempo Criacao BST   |  Tempo Criacao AVL   | Altura BST | Altura AVL |\n");
-	printf("+-----------+----------------------+----------------------+------------+------------+\n");
+    int chavesBusca[30];
+    srand(time(NULL));
 
-	for(k = 0; k < NUM_EXECUCOES; k++){
+    printf("=== Chaves de busca geradas ===\n");
+    for (int i = 0; i < 15; i++) {
+        int idx = (int)((unsigned int)((rand() << 15) | rand()) % (unsigned int)n);
+        chavesBusca[i] = vetor[idx]; /* presente */
+        printf("Busca %2d (presente): %d\n", i + 1, chavesBusca[i]);
+    }
+    for (int i = 15; i < 30; i++) {
+        chavesBusca[i] = (int)((unsigned int)((rand() << 15) | rand()) % 1000000U); /* aleatoria */
+        printf("Busca %2d (aleatoria): %d\n", i + 1, chavesBusca[i]);
+    }
+    printf("\n");
 
-		/* ---------- Criacao da BST ---------- */
-		Arvore *bst = criarArvore();
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		for(i = 0; i < NUM_ELEMENTOS; i++){
-			bst = inserirBST(bst, numeros[i]);
-		}
-		clock_gettime(CLOCK_REALTIME, &fim);
-		double tempoCriacaoBST = tempoDeExecucao(inicio, fim);
 
-		/* ---------- Criacao da AVL ---------- */
-		NoAVL *avl = criarAVL();
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		for(i = 0; i < NUM_ELEMENTOS; i++){
-			avl = inserirAVL(avl, numeros[i]);
-		}
-		clock_gettime(CLOCK_REALTIME, &fim);
-		double tempoCriacaoAVL = tempoDeExecucao(inicio, fim);
+    /* Variaveis para acumular resultados das 10 execucoes */
 
-		/* ---------- Alturas ---------- */
-		int hBST = alturaBST(bst);
-		int hAVL = alturaAVL(avl);
+    double tempoCriacaoAVL_total  = 0.0;
+    double tempoCriacaoBST_total  = 0.0;
+    double tempoBuscaAVL_total    = 0.0;
+    double tempoBuscaBST_total    = 0.0;
 
-		tempoTotalCriacaoBST += tempoCriacaoBST;
-		tempoTotalCriacaoAVL += tempoCriacaoAVL;
+    printf("============================================================\n");
+    printf("       COMPARACAO: ARVORE AVL  x  ARVORE BST\n");
+    printf("       %d elementos | %d execucoes | %d buscas por execucao\n", n, execucoes, buscas);
+    printf("============================================================\n\n");
 
-		printf("|   %2d      |  %14.6f seg  |  %14.6f seg  |     %4d   |     %4d   |\n",
-		       k + 1, tempoCriacaoBST, tempoCriacaoAVL, hBST, hAVL);
+    for (int exec = 0; exec < execucoes; exec++) {
 
-		/* ---------- Busca na BST (30 consultas) ---------- */
-		double tempoBuscaBST = 0;
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		for(j = 0; j < NUM_CONSULTAS; j++){
-			buscarBST(bst, chavesBusca[j]);
-		}
-		clock_gettime(CLOCK_REALTIME, &fim);
-		tempoBuscaBST = tempoDeExecucao(inicio, fim);
+        printf("--- Execucao %d/%d ---\n", exec + 1, execucoes);
 
-		/* ---------- Busca na AVL (30 consultas) ---------- */
-		double tempoBuscaAVL = 0;
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		for(j = 0; j < NUM_CONSULTAS; j++){
-			buscarAVL(avl, chavesBusca[j]);
-		}
-		clock_gettime(CLOCK_REALTIME, &fim);
-		tempoBuscaAVL = tempoDeExecucao(inicio, fim);
+        /* ---- Criacao da AVL ---- */
 
-		tempoTotalBuscaBST += tempoBuscaBST;
-		tempoTotalBuscaAVL += tempoBuscaAVL;
+        AVL* avl = criarAVL();
 
-		/* Liberar memoria das arvores */
-		bst = liberarBST(bst);
-		avl = liberarAVL(avl);
-	}
+        clock_gettime(CLOCK_REALTIME, &inicio);
+        for (int i = 0; i < n; i++) {
+            avl = inserirNaAVL(avl, valores[i]);
+        }
+        clock_gettime(CLOCK_REALTIME, &fim);
 
-	printf("+-----------+----------------------+----------------------+------------+------------+\n\n");
+        double tCriacaoAVL = tempoDeExecucao(inicio, fim);
+        tempoCriacaoAVL_total += tCriacaoAVL;
 
-	double mediaCriacaoBST = tempoTotalCriacaoBST / NUM_EXECUCOES;
-	double mediaCriacaoAVL = tempoTotalCriacaoAVL / NUM_EXECUCOES;
-	double mediaBuscaBST   = mediaTempo30(tempoTotalBuscaBST / NUM_EXECUCOES);
-	double mediaBuscaAVL   = mediaTempo30(tempoTotalBuscaAVL / NUM_EXECUCOES);
+        int altAVL = alturaRealAVL(avl);
+        printf("  AVL  - Criacao: %.6lf s | Altura: %d\n", tCriacaoAVL, altAVL);
 
-	printf("================================================================\n");
-	printf("                     RESUMO DOS RESULTADOS\n");
-	printf("================================================================\n\n");
+        /* ---- Criacao da BST ---- */
 
-	printf("--- Tempo medio de CRIACAO (media de %d execucoes) ---\n", NUM_EXECUCOES);
-	printf("  BST: %.6f segundos\n", mediaCriacaoBST);
-	printf("  AVL: %.6f segundos\n", mediaCriacaoAVL);
-	printf("\n");
+        Arvore* bst = criarArvore();
 
-	printf("--- Tempo total de BUSCA (%d consultas x %d execucoes) ---\n",
-	       NUM_CONSULTAS, NUM_EXECUCOES);
-	printf("  BST total: %.6f segundos\n", tempoTotalBuscaBST);
-	printf("  AVL total: %.6f segundos\n", tempoTotalBuscaAVL);
-	printf("\n");
+        clock_gettime(CLOCK_REALTIME, &inicio);
+        for (int i = 0; i < n; i++) {
+            bst = inserirBST(bst, valores[i]);
+        }
+        clock_gettime(CLOCK_REALTIME, &fim);
 
-	printf("--- Tempo medio por CONSULTA (media de %d consultas) ---\n", NUM_CONSULTAS);
-	printf("  BST: %.9f segundos\n", mediaBuscaBST);
-	printf("  AVL: %.9f segundos\n", mediaBuscaAVL);
-	printf("\n");
+        double tCriacaoBST = tempoDeExecucao(inicio, fim);
+        tempoCriacaoBST_total += tCriacaoBST;
 
-	printf("================================================================\n");
+        /* Calcula altura da BST */
+        int altBST = alturaBST(bst);
 
-	/* Detalhamento das 30 consultas (ultima execucao recriada) */
-	printf("\n--- Detalhamento das %d consultas (ultima execucao recriada) ---\n\n", NUM_CONSULTAS);
+        printf("  BST  - Criacao: %.6lf s | Altura: %d\n", tCriacaoBST, altBST);
 
-	Arvore *bstFinal = criarArvore();
-	NoAVL *avlFinal = criarAVL();
-	for(i = 0; i < NUM_ELEMENTOS; i++){
-		bstFinal = inserirBST(bstFinal, numeros[i]);
-		avlFinal = inserirAVL(avlFinal, numeros[i]);
-	}
+        /* ---- Buscas na AVL ---- */
 
-	double somaDetBST = 0, somaDetAVL = 0;
+        double tBuscaAVL = 0.0;
+        for (int b = 0; b < buscas; b++) {
+            clock_gettime(CLOCK_REALTIME, &inicio);
+            int achou = buscarAVL(avl, chavesBusca[b]);
+            clock_gettime(CLOCK_REALTIME, &fim);
+            tBuscaAVL += tempoDeExecucao(inicio, fim);
+        }
+        tempoBuscaAVL_total += tBuscaAVL;
+        printf("  AVL  - Tempo total %d buscas: %.6lf s | Media: %.9lf s\n",
+               buscas, tBuscaAVL, tBuscaAVL / buscas);
 
-	printf("+----------+------------+----------------------+----------------------+\n");
-	printf("| Consulta |   Chave    |    Tempo BST (seg)   |    Tempo AVL (seg)   |\n");
-	printf("+----------+------------+----------------------+----------------------+\n");
+        /* ---- Buscas na BST ---- */
 
-	for(j = 0; j < NUM_CONSULTAS; j++){
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		buscarBST(bstFinal, chavesBusca[j]);
-		clock_gettime(CLOCK_REALTIME, &fim);
-		double tBST = tempoDeExecucao(inicio, fim);
+        double tBuscaBST = 0.0;
+        for (int b = 0; b < buscas; b++) {
+            clock_gettime(CLOCK_REALTIME, &inicio);
+            int achou = buscar(bst, chavesBusca[b]);
+            clock_gettime(CLOCK_REALTIME, &fim);
+            tBuscaBST += tempoDeExecucao(inicio, fim);
+        }
+        tempoBuscaBST_total += tBuscaBST;
+        printf("  BST  - Tempo total %d buscas: %.6lf s | Media: %.9lf s\n",
+               buscas, tBuscaBST, tBuscaBST / buscas);
 
-		clock_gettime(CLOCK_REALTIME, &inicio);
-		buscarAVL(avlFinal, chavesBusca[j]);
-		clock_gettime(CLOCK_REALTIME, &fim);
-		double tAVL = tempoDeExecucao(inicio, fim);
+        printf("\n");
 
-		somaDetBST += tBST;
-		somaDetAVL += tAVL;
+        /* Libera memoria das arvores desta execucao */
 
-		printf("|    %2d    | %9d  |    %14.9f  |    %14.9f  |\n",
-		       j + 1, chavesBusca[j], tBST, tAVL);
-	}
+        avl = liberaAVL(avl);
+        bst = libera(bst);
+    }
 
-	printf("+----------+------------+----------------------+----------------------+\n");
-	printf("|  TOTAL   |     -      |    %14.9f  |    %14.9f  |\n", somaDetBST, somaDetAVL);
-	printf("|  MEDIA   |     -      |    %14.9f  |    %14.9f  |\n",
-	       mediaTempo30(somaDetBST), mediaTempo30(somaDetAVL));
-	printf("+----------+------------+----------------------+----------------------+\n");
+    /* ---- Resultados finais ---- */
 
-	/* Liberar memoria */
-	liberarBST(bstFinal);
-	liberarAVL(avlFinal);
-	free(numeros);
+    printf("============================================================\n");
+    printf("                   RESULTADOS FINAIS\n");
+    printf("============================================================\n\n");
 
-	return 0;
+    printf("CRIACAO DAS ARVORES (%d execucoes com %d elementos):\n", execucoes, n);
+    printf("  AVL  - Tempo total: %.6lf s | Tempo medio por execucao: %.6lf s\n",
+           tempoCriacaoAVL_total, tempoCriacaoAVL_total / execucoes);
+    printf("  BST  - Tempo total: %.6lf s | Tempo medio por execucao: %.6lf s\n",
+           tempoCriacaoBST_total, tempoCriacaoBST_total / execucoes);
+    printf("\n");
+
+    printf("BUSCA NAS ARVORES (%d execucoes x %d buscas = %d buscas totais):\n",
+           execucoes, buscas, execucoes * buscas);
+    printf("  AVL  - Tempo total: %.6lf s | Media por busca: %.9lf s\n",
+           tempoBuscaAVL_total, tempoBuscaAVL_total / (execucoes * buscas));
+    printf("  BST  - Tempo total: %.6lf s | Media por busca: %.9lf s\n",
+           tempoBuscaBST_total, tempoBuscaBST_total / (execucoes * buscas));
+    printf("\n");
+
+    if (tempoCriacaoAVL_total > tempoCriacaoBST_total) {
+        printf("  -> Criacao: BST foi %.2lf%% mais rapida que AVL.\n",
+               ((tempoCriacaoAVL_total - tempoCriacaoBST_total) / tempoCriacaoAVL_total) * 100.0);
+    } else {
+        printf("  -> Criacao: AVL foi %.2lf%% mais rapida que BST.\n",
+               ((tempoCriacaoBST_total - tempoCriacaoAVL_total) / tempoCriacaoBST_total) * 100.0);
+    }
+
+    if (tempoBuscaAVL_total < tempoBuscaBST_total) {
+        printf("  -> Busca:   AVL foi %.2lf%% mais rapida que BST.\n",
+               ((tempoBuscaBST_total - tempoBuscaAVL_total) / tempoBuscaBST_total) * 100.0);
+    } else {
+        printf("  -> Busca:   BST foi %.2lf%% mais rapida que AVL.\n",
+               ((tempoBuscaAVL_total - tempoBuscaBST_total) / tempoBuscaAVL_total) * 100.0);
+    }
+
+    printf("\n");
+
+    free(valores);
+    return 0;
 }
