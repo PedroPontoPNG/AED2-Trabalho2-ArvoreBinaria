@@ -4,6 +4,9 @@
 #include <stdio.h>
 
 #define TAM_DADOS 100
+#define MAX_TEXTO 5000
+#define TAM_PACOTE 5
+#define MAX_PACOTES 1000
 
 typedef struct Pacote
 {
@@ -47,5 +50,18 @@ void imprimirPacote(
 void salvarArquivo(
     ArvorePacotes *arv,
     FILE *fp);
+// FUNÇÕES PARA ARQUIVOS QUESTAO02
+void lerArquivo(
+    char nomeArquivo[],
+    char texto[]);
 
+int dividirPacotes(
+    char texto[],
+    Pacote pacotes[]);
+void embaralharPacotes(
+    Pacote pacotes[],
+    int n);
+void mostrarPacotes(
+    Pacote pacotes[],
+    int n);
 #endif
